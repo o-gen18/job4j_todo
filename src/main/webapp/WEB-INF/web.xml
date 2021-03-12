@@ -5,5 +5,20 @@
 <web-app>
   <display-name>Archetype Created Web Application</display-name>
 
-
+<servlet>
+  <servlet-name>TaskServlet</servlet-name>
+  <servlet-class>todo.controller.TaskServlet</servlet-class>
+</servlet>
+  <servlet-mapping>
+    <servlet-name>TaskServlet</servlet-name>
+    <url-pattern>/todo</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <servlet-name>DeleteServlet</servlet-name>
+    <servlet-class>todo.controller.DeleteServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>DeleteServlet</servlet-name>
+    <url-pattern>/delete</url-pattern>
+  </servlet-mapping>
 </web-app>

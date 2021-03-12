@@ -1,5 +1,213 @@
-<html>
-<body>
-<h2>Hello World!</h2>
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <!-- Popper JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <!-- Latest compiled JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <title>TODO list</title>
+    <style>
+        .popUpWindowBackground{
+            display: none;
+            position: fixed;
+            overflow: auto;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+        }
+        .popUpWindow{
+            background-color: #fefefe;
+            margin: 5% auto 15% auto;
+            border: 1px solid #888;
+            width: 80%;
+        }
+    </style>
+    <script>
+        function validate() {
+            if (document.getElementById('description').value === '') {
+                alert('Please, type the description of the task!');
+                return false;
+            }
+            postTask();
+        }
+
+        function postTask() {
+            $.ajax({
+                type: 'POST',
+                url: 'http://localhost:8080/job4j_todo/todo',
+                data: {description: $('#description').val()},
+                async: false
+            }).done(function () {
+                location.reload();
+            });
+        }
+
+        function deleteTask(tableRow) {
+            $.ajax({
+                type: 'POST',
+                url: 'http://localhost:8080/job4j_todo/delete',
+                data: {id: tableRow.getAttribute('id')}
+            }).done(function () {
+                location.reload();
+            });
+        }
+
+        function updateTask(tableRow, setDone) {
+            $.ajax({
+                type: 'POST',
+                url: 'http://localhost:8080/job4j_todo/todo',
+                data: {
+                    id: tableRow.getAttribute('id'),
+                    description: tableRow.getElementsByClassName('descriptionText')[0].innerText,
+                    created: Date.parse(tableRow.getElementsByClassName('created')[0].innerHTML),
+                    done: setDone}
+            }).done(function () {
+                location.reload();
+            });
+        }
+
+        function getTasks() {
+            $.ajax({
+                type: 'GET',
+                url: 'http://localhost:8080/job4j_todo/todo',
+                dataType: 'json',
+                async: false
+            }).done(function (data) {
+                var jsonResp = JSON.parse(JSON.stringify(data));
+                for (var i in jsonResp) {
+                    var desc = jsonResp[i].description;
+                    $('#tableBody').append(
+                        '<tr id="'+ jsonResp[i].id + '">\n' +
+                        '                <td>\n' +
+                        '                    <a class="popUpTrash" title="delete" style="cursor: pointer; color:black; text-decoration: none" onclick="deleteTask(this.closest(\'tr\'))">\n' +
+                        '                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">\n' +
+                        '                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>\n' +
+                        '                            <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>\n' +
+                        '                        </svg>\n' +
+                        '                    </a>\n' +
+                        '                    <a class="descriptionText" title="change the description" style="cursor: pointer; color:black" onclick="popUpEdit(this.closest(\'tr\'))">' + desc + '</a>\n' +
+                        '                </td>\n' +
+                        '                <td class="created">'+ new Date(jsonResp[i].created) +'</td>\n' +
+                        '                <td class="doneSymbol">\n' + renderDone(jsonResp[i].done) +
+                        '                </td>\n' +
+                        '            </tr>'
+                    );
+                }
+                showAll(document.getElementById('checkbox'));
+            })
+        }
+
+        function renderDone(boolean) {
+            if (boolean === true) {
+                return'<a class="status" data-isDone="true" title="set undone" onclick="return updateTask(this.closest(\'tr\'), false)">\n' +
+                    '                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16" style="color: #008000; cursor: pointer">\n' +
+                    '                    <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>\n' +
+                    '                </svg>\n' +
+                    '                </a>';
+            } else {
+                return '<a class="status" data-isDone="false" title="set done" onclick="return updateTask(this.closest(\'tr\'), true)">\n' +
+                    '                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16" style="color: red; cursor: pointer">\n' +
+                    '                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>\n' +
+                    '               </svg>\n' +
+                    '                </a>';
+            }
+        }
+
+        function showAll(checkbox) {
+            var done = document.getElementsByClassName('status');
+            for (var i = 0; i < done.length; i++) {
+                if (done[i].getAttribute('data-isDone') === 'true') {
+                    if (checkbox.checked) {
+                        done[i].closest('tr').style.display = 'table-row';
+                    } else {
+                        done[i].closest('tr').style.display = 'none';
+                    }
+                }
+            }
+        }
+
+        function popUpEdit(tableRow) {
+            document.getElementsByClassName('popUpWindowBackground')[0].style.display = 'block';
+            var editDescription = document.getElementById('editDescription');
+            editDescription.value = tableRow.getElementsByClassName('descriptionText')[0].innerText;
+            editDescription.setAttribute('data-tempId', tableRow.getAttribute('id'));
+        }
+
+        function changeDescription() {
+            var editDescription = document.getElementById('editDescription');
+            var oldTableRow = document.getElementById(editDescription.getAttribute('data-tempId'));
+            var oldDescription = oldTableRow.getElementsByClassName('descriptionText')[0].innerText;
+            var newDescription = editDescription.value;
+            var isDone = oldTableRow.getElementsByClassName('status')[0].getAttribute('data-isDone');
+            if (newDescription === '' || oldDescription === newDescription) {
+                alert('The input should distinct from the old description and not be empty!');
+                return false;
+            }
+            oldTableRow.getElementsByClassName('descriptionText')[0].innerText = newDescription;
+            updateTask(oldTableRow, isDone);
+        }
+
+        window.onclick = function(event) {
+            var popUp = document.getElementsByClassName('popUpWindowBackground')[0];
+            if (event.target === popUp) {
+                popUp.style.display = "none";
+            }
+        }
+    </script>
+</head>
+<body onload="getTasks()">
+<div class="container-fluid">
+    <h1 align="center">ToDo-list</h1>
+</div>
+<div class="container" style="width:75%">
+    <form>
+        <div class="form-group">
+            <label for="description">Add new task: </label>
+            <textarea id="description" class="form-control" placeholder="Type description..."></textarea>
+        </div>
+        <input type="button" class="btn btn-primary" value="Submit" onclick="return validate()">
+    </form>
+    <div class="form-check" align="center">
+        <h3>Existing tasks</h3>
+        <label class="form-check-label">
+            <input id="checkbox" type="checkbox" checked="checked" autocomplete="off" class="form-check-input" onclick="showAll(this)">Show all
+        </label>
+    </div>
+    <div class="form-group">
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th>Description</th>
+                <th>Created</th>
+                <th>Done</th>
+            </tr>
+            </thead>
+            <tbody id="tableBody">
+            </tbody>
+        </table>
+    </div>
+    <div class="popUpWindowBackground">
+        <form class="popUpWindow">
+            <div class="container">
+                <label for="editDescription"><b>Edit description</b></label>
+                <textarea id="editDescription" class="form-control" name="description"></textarea>
+            </div>
+            <div class="container">
+                <button type="button" class="btn btn-primary" onclick="changeDescription()">Edit</button>
+            </div>
+        </form>
+    </div>
+</div>
 </body>
 </html>
