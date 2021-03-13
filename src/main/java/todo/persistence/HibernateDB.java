@@ -2,11 +2,13 @@ package todo.persistence;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import todo.model.Task;
 import java.util.List;
+import java.util.function.Function;
 
 public class HibernateDB implements AutoCloseable {
     private static final HibernateDB INSTANCE = new HibernateDB();
@@ -18,20 +20,33 @@ public class HibernateDB implements AutoCloseable {
     private HibernateDB() {
     }
 
+    private <T> T doTransaction(final Function<Session, T> command) {
+        final Session session = sf.openSession();
+        final Transaction tr = session.beginTransaction();
+        try {
+            T rsl = command.apply(session);
+            tr.commit();
+            return rsl;
+        } catch (final Exception e) {
+            session.getTransaction().rollback();
+            throw e;
+        } finally {
+            session.close();
+        }
+    }
+
     private Task create(Task task) {
-        Session session = sf.openSession();
-        session.beginTransaction();
-        session.save(task);
-        session.getTransaction().commit();
-        return task;
+        return this.doTransaction(session -> {
+            session.save(task);
+            return task;
+        });
     }
 
     private Task update(Task task) {
-        Session session = sf.openSession();
-        session.beginTransaction();
-        session.update(task);
-        session.getTransaction().commit();
-        return task;
+        return this.doTransaction(session -> {
+            session.update(task);
+            return task;
+        });
     }
 
     public static HibernateDB instOf() {
@@ -47,22 +62,17 @@ public class HibernateDB implements AutoCloseable {
     }
 
     public List<Task> findAll() {
-        Session session = sf.openSession();
-        session.beginTransaction();
-        List<Task> list = session
-                .createQuery("from todo.model.Task as task order by task.created desc").list();
-        session.getTransaction().commit();
-        return list;
+        return this.doTransaction(session -> session
+                .createQuery("from todo.model.Task as task order by task.created desc").list());
     }
 
     public boolean delete(Integer id) {
-        Session session = sf.openSession();
-        session.beginTransaction();
         Task toDelete = new Task();
         toDelete.setId(id);
-        session.delete(toDelete);
-        session.getTransaction().commit();
-        return true;
+        return this.doTransaction(session -> {
+            session.delete(toDelete);
+            return true;
+        });
     }
 
     @Override
