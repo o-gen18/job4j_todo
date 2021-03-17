@@ -1,5 +1,5 @@
 #TODO list
-[![Build Status](https://travis-ci.org/o-gen18/job4j_todo.svg?branch=main)](https://travis-ci.org/o-gen18/job4j_todo)
+[![Build Status](https://travis-ci.org/o-gen18/job4j_todo.svg?branch=master)](https://travis-ci.org/o-gen18/job4j_todo)
 
 This is simple todo-list web-app. You can submit a task typing the text into textarea and pushing the submit button.
 All tasks are ordered in the descending order by creation date.
