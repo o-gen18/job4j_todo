@@ -1,3 +1,5 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jstl/core" %>
 <!doctype html>
 <html lang="en">
 <head>
@@ -14,7 +16,7 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <title>TODO list</title>
     <style>
-        .popUpWindowBackground{
+        .popUpWindowBackground, .logInPopUp, .registerPopUp{
             display: none;
             position: fixed;
             overflow: auto;
@@ -26,7 +28,7 @@
             background-color: rgb(0,0,0);
             background-color: rgba(0,0,0,0.4);
         }
-        .popUpWindow{
+        .popUpWindow, .logInWindow, .registerWindow{
             background-color: #fefefe;
             margin: 5% auto 15% auto;
             border: 1px solid #888;
@@ -34,7 +36,19 @@
         }
     </style>
     <script>
+        function userRegistered() {
+            <%if (session.getAttribute("user") == null) {%>
+            alert('Please, log in');
+            return false;
+            <%} else {%>
+            return true;
+            <%}%>
+        }
+
         function validate() {
+            if (!userRegistered()) {
+                return false;
+            }
             if (document.getElementById('description').value === '') {
                 alert('Please, type the description of the task!');
                 return false;
@@ -44,18 +58,26 @@
 
         function postTask() {
             $.ajax({
-                type: 'POST',
+                method: 'POST',
                 url: 'http://localhost:8080/job4j_todo/todo',
                 data: {description: $('#description').val()},
-                async: false
-            }).done(function () {
-                location.reload();
+                async: false,
+                success: function () {
+                    location.reload();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    alert('textStatus: ' + textStatus + '\n' + 'errorThrown: ' + errorThrown + '\n' + 'responseText:' + jqXHR.responseText
+                    + '\n' + 'jqXHR.statusText: ' + jqXHR.statusText);
+                }
             });
         }
 
         function deleteTask(tableRow) {
+            if (!userRegistered()) {
+                return false;
+            }
             $.ajax({
-                type: 'POST',
+                method: 'POST',
                 url: 'http://localhost:8080/job4j_todo/delete',
                 data: {id: tableRow.getAttribute('id')}
             }).done(function () {
@@ -64,29 +86,35 @@
         }
 
         function updateTask(tableRow, setDone) {
+            if (!userRegistered()) {
+                return false;
+            }
             $.ajax({
-                type: 'POST',
+                method: 'POST',
                 url: 'http://localhost:8080/job4j_todo/todo',
                 data: {
                     id: tableRow.getAttribute('id'),
                     description: tableRow.getElementsByClassName('descriptionText')[0].innerText,
                     created: Date.parse(tableRow.getElementsByClassName('created')[0].innerHTML),
-                    done: setDone}
-            }).done(function () {
-                location.reload();
+                    done: setDone},
+                success: function () {
+                    location.reload();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    alert('textStatus: ' + textStatus + '\n' + 'errorThrown: ' + errorThrown);
+                }
             });
         }
 
         function getTasks() {
             $.ajax({
-                type: 'GET',
+                method: 'GET',
                 url: 'http://localhost:8080/job4j_todo/todo',
-                dataType: 'json',
-                async: false
+                dataType: 'json'
             }).done(function (data) {
                 var jsonResp = JSON.parse(JSON.stringify(data));
                 for (var i in jsonResp) {
-                    var desc = jsonResp[i].description;
+                    var desc = jsonResp[i].name;
                     $('#tableBody').append(
                         '<tr id="'+ jsonResp[i].id + '">\n' +
                         '                <td>\n' +
@@ -99,6 +127,8 @@
                         '                    <a class="descriptionText" title="change the description" style="cursor: pointer; color:black" onclick="popUpEdit(this.closest(\'tr\'))">' + desc + '</a>\n' +
                         '                </td>\n' +
                         '                <td class="created">'+ new Date(jsonResp[i].created) +'</td>\n' +
+                        '                <td class="author">'+ jsonResp[i].author.name +'</td>\n' +
+                        '                <td class="author-role">'+ jsonResp[i].author.role.name +'</td>\n' +
                         '                <td class="doneSymbol">\n' + renderDone(jsonResp[i].done) +
                         '                </td>\n' +
                         '            </tr>'
@@ -159,16 +189,108 @@
         }
 
         window.onclick = function(event) {
-            var popUp = document.getElementsByClassName('popUpWindowBackground')[0];
-            if (event.target === popUp) {
-                popUp.style.display = "none";
+            var popUpEdit = document.getElementsByClassName('popUpWindowBackground')[0];
+            var popUpLogin = document.getElementsByClassName('logInPopUp')[0];
+            var popUpRegister = document.getElementsByClassName('registerPopUp')[0];
+            if (event.target === popUpEdit) {
+                popUpEdit.style.display = "none";
+            } else if (event.target === popUpLogin) {
+                popUpLogin.style.display = "none";
+            } else if (event.target === popUpRegister) {
+                popUpRegister.style.display = "none";
             }
+        }
+
+        function logIn() {
+            var email = document.getElementById('logInEmail').value;
+            var password = document.getElementById('logInPassword').value;
+            if (email === '' || password === '') {
+                alert('Fill in both fields, please!');
+                return false;
+            }
+            $.ajax({
+                method: 'POST',
+                url: 'http://localhost:8080/job4j_todo/auth',
+                data: {
+                    email: email,
+                    password: password
+                },
+                success: function () {
+                    location.reload();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    alert('Wrong password or email!');
+                    return false;
+                }
+            });
+        }
+
+        function signIn() {
+            var name = document.getElementById('signInName').value;
+            var email = document.getElementById('signInEmail').value;
+            var password = document.getElementById('signInPassword').value;
+            var role = document.getElementById('signInRole').value;
+            if (name === '' || email === '' || password === '' || role === '') {
+                alert('Fill in all the forms!');
+                return false;
+            }
+            $.ajax({
+                method: 'POST',
+                url: 'http://localhost:8080/job4j_todo/register',
+                data: {
+                    email: email,
+                    password: password,
+                    name: name,
+                    role: role
+                },
+                success: function () {
+                    location.reload();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    alert('This email already exists, enter different!');
+                }
+            });
+        }
+
+        function loadRoles() {
+            $.ajax({
+                method: 'GET',
+                url: 'http://localhost:8080/job4j_todo/role',
+                dataType: 'json'
+            }).done(function(roles) {
+                var jsonRoles = JSON.parse(JSON.stringify(roles));
+                for (var i in jsonRoles) {
+                    $('#roles').append('<option value="' + jsonRoles[i].name + '">');
+                }
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                alert('textStatus: ' + textStatus + '\n' + 'errorThrown: ' + errorThrown + '\n' + 'responseText:' + jqXHR.responseText
+                    + '\n' + 'jqXHR.statusText: ' + jqXHR.statusText);
+            });
+        }
+
+        function logOut() {
+            $.ajax({
+                method: 'GET',
+                url: 'http://localhost:8080/job4j_todo/logOut'
+            }).done(function (data) {
+                location.reload();
+            });
         }
     </script>
 </head>
-<body onload="getTasks()">
+<body onload="getTasks(); loadRoles()">
 <div class="container-fluid">
     <h1 align="center">ToDo-list</h1>
+</div>
+<div class="container" style="width:75%; text-align-last: right">
+        <c:choose>
+            <c:when test="${user.name == null}">
+            <a onclick="document.getElementsByClassName('logInPopUp')[0].style.display = 'block'" style="cursor: pointer; font-weight: bold">Log in</a>
+            </c:when>
+            <c:otherwise>
+                <a onclick="logOut()" style="cursor: pointer; color: green; font-weight: bold"><c:out value="${user.name} - ${user.role.name}"/> | Log out</a>
+            </c:otherwise>
+        </c:choose>
 </div>
 <div class="container" style="width:75%">
     <form>
@@ -190,6 +312,8 @@
             <tr>
                 <th>Description</th>
                 <th>Created</th>
+                <th>Author</th>
+                <th>Role</th>
                 <th>Done</th>
             </tr>
             </thead>
@@ -207,6 +331,37 @@
                 <button type="button" class="btn btn-primary" onclick="changeDescription()">Edit</button>
             </div>
         </form>
+    </div>
+    <div class="logInPopUp">
+        <div class="form-group logInWindow">
+            <form class="logInForm">
+                <div class="container-fluid">
+                    <label for="logInEmail"><b>Email: </b></label><input id="logInEmail" class="form-control" type="email">
+                    <label for="logInPassword"><b>Password: </b></label><input id="logInPassword"class="form-control" type="password">
+                </div>
+                <div class="container-fluid">
+                    <button type="button" class="btn btn-primary" onclick="logIn()">Log In</button>
+                    <button type="button" class="btn btn-primary" onclick="document.getElementsByClassName('registerPopUp')[0].style.display = 'block'">Register</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="registerPopUp">
+        <div class="form-group registerWindow">
+            <form class="registerForm">
+                <div class="container-fluid">
+                    <label for="signInName"><b>Name: </b></label><input id="signInName" class="form-control" type="text">
+                    <label for="signInEmail"><b>Email: </b></label><input id="signInEmail" class="form-control" type="email">
+                    <label for="signInPassword"><b>Password: </b></label><input id="signInPassword" class="form-control" type="password">
+                    <label for="signInRole"><b>Role: </b></label>
+                    <input id="signInRole" list="roles" class="form-control" placeholder="Select a role">
+                    <datalist id="roles"></datalist>
+                    <div class="container-fluid">
+                        <button type="button" class="btn btn-primary" onclick="signIn()">Sign In</button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 </body>

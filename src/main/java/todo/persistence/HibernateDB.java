@@ -6,7 +6,10 @@ import org.hibernate.Transaction;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import todo.model.Model;
+import todo.model.Role;
 import todo.model.Task;
+import todo.model.User;
 import java.util.List;
 import java.util.function.Function;
 
@@ -35,17 +38,17 @@ public class HibernateDB implements AutoCloseable {
         }
     }
 
-    private Task create(Task task) {
+    private Model create(Model model) {
         return this.doTransaction(session -> {
-            session.save(task);
-            return task;
+            session.save(model);
+            return model;
         });
     }
 
-    private Task update(Task task) {
+    private Model update(Model model) {
         return this.doTransaction(session -> {
-            session.update(task);
-            return task;
+            session.update(model);
+            return model;
         });
     }
 
@@ -53,17 +56,22 @@ public class HibernateDB implements AutoCloseable {
         return INSTANCE;
     }
 
-    public Task save(Task task) {
-        if (task.getId() == 0) {
-            return create(task);
+    public Model save(Model model) {
+        if (model.getId() == 0) {
+            return create(model);
         } else {
-            return update(task);
+            return update(model);
         }
     }
 
     public List<Task> findAll() {
         return this.doTransaction(session -> session
                 .createQuery("from todo.model.Task as task order by task.created desc").list());
+    }
+
+    public List<Role> getRoles() {
+        return this.doTransaction(session -> session
+                .createQuery("from todo.model.Role as role order by role.id").list());
     }
 
     public boolean delete(Integer id) {
@@ -73,6 +81,24 @@ public class HibernateDB implements AutoCloseable {
             session.delete(toDelete);
             return true;
         });
+    }
+
+    public User findUserByEmail(String email) {
+        return (User) this.doTransaction(session ->
+                session.createQuery("select user from todo.model.User as user where email =:email")
+                        .setParameter("email", email)
+                        .getResultList().stream()
+                        .findFirst()
+                        .orElse(null));
+    }
+
+    public Role findRoleByName(String roleName) {
+        return (Role) this.doTransaction(session ->
+            session.createQuery("select role from todo.model.Role as role where name =:roleName")
+                    .setParameter("roleName", roleName)
+                    .getResultList().stream()
+                    .findFirst()
+                    .orElse(null));
     }
 
     @Override

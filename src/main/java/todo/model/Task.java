@@ -6,23 +6,26 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "task")
-public class Task {
+public class Task implements Model {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    private String description;
+    private String name;
     private Timestamp created;
     private boolean done;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User author;
 
-    public Task(String description, Timestamp created, boolean done) {
-        this.description = description;
+    public Task(String name, Timestamp created, boolean done) {
+        this.name = name;
         this.created = created;
         this.done = done;
     }
 
-    public Task(int id, String description, Timestamp created, boolean done) {
+    public Task(int id, String name, Timestamp created, boolean done) {
         this.id = id;
-        this.description = description;
+        this.name = name;
         this.created = created;
         this.done = done;
     }
@@ -38,12 +41,12 @@ public class Task {
         this.id = id;
     }
 
-    public String getDescription() {
-        return description;
+    public String getName() {
+        return name;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public Timestamp getCreated() {
@@ -62,14 +65,23 @@ public class Task {
         this.done = done;
     }
 
+    public User getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(User author) {
+        this.author = author;
+    }
+
     @Override
     public String toString() {
         String ln = System.lineSeparator();
-        return String.format("== Task == %s%s%s%s",
+        return String.format("== Task == %s%s%s%s%s",
                 ln + "id: " + id + ln,
                 "created: " + created + ln,
-                "description: " + description + ln,
-                "done: " + done + ln);
+                "description: " + name + ln,
+                "done: " + done + ln,
+                "author: " + author.getName());
     }
 
     @Override

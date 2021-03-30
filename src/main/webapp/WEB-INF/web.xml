@@ -4,21 +4,52 @@
 
 <web-app>
   <display-name>Archetype Created Web Application</display-name>
-
-<servlet>
+  <servlet>
   <servlet-name>TaskServlet</servlet-name>
   <servlet-class>todo.controller.TaskServlet</servlet-class>
-</servlet>
+  </servlet>
   <servlet-mapping>
     <servlet-name>TaskServlet</servlet-name>
     <url-pattern>/todo</url-pattern>
   </servlet-mapping>
   <servlet>
-    <servlet-name>DeleteServlet</servlet-name>
-    <servlet-class>todo.controller.DeleteServlet</servlet-class>
+    <servlet-name>DeleteTaskServlet</servlet-name>
+    <servlet-class>todo.controller.DeleteTaskServlet</servlet-class>
   </servlet>
   <servlet-mapping>
-    <servlet-name>DeleteServlet</servlet-name>
+    <servlet-name>DeleteTaskServlet</servlet-name>
     <url-pattern>/delete</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <servlet-name>AuthServlet</servlet-name>
+    <servlet-class>todo.controller.AuthServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>AuthServlet</servlet-name>
+    <url-pattern>/auth</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <servlet-name>RegisterServlet</servlet-name>
+    <servlet-class>todo.controller.RegisterServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>RegisterServlet</servlet-name>
+    <url-pattern>/register</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <servlet-name>RoleServlet</servlet-name>
+    <servlet-class>todo.controller.RoleServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>RoleServlet</servlet-name>
+    <url-pattern>/role</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <servlet-name>LogoutServlet</servlet-name>
+    <servlet-class>todo.controller.LogoutServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>LogoutServlet</servlet-name>
+    <url-pattern>/logOut</url-pattern>
   </servlet-mapping>
 </web-app>
