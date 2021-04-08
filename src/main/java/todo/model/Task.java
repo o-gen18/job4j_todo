@@ -1,8 +1,8 @@
 package todo.model;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -13,8 +13,11 @@ public class Task implements Model {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private String name;
-    private Timestamp created;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date created;
     private boolean done;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User author;
@@ -22,20 +25,14 @@ public class Task implements Model {
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.EAGER)
     private List<Category> categories = new ArrayList<>();
 
-    public Task(String name, Timestamp created, boolean done) {
+    public Task(String name, boolean done) {
         this.name = name;
-        this.created = created;
-        this.done = done;
-    }
-
-    public Task(int id, String name, Timestamp created, boolean done) {
-        this.id = id;
-        this.name = name;
-        this.created = created;
+        this.created = new Date(System.currentTimeMillis());
         this.done = done;
     }
 
     public Task() {
+        this.created = new Date(System.currentTimeMillis());
     }
 
     public void addCategory(Category category) {
@@ -58,11 +55,11 @@ public class Task implements Model {
         this.name = name;
     }
 
-    public Timestamp getCreated() {
+    public Date getCreated() {
         return created;
     }
 
-    public void setCreated(Timestamp created) {
+    public void setCreated(Date created) {
         this.created = created;
     }
 

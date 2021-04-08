@@ -40,7 +40,6 @@ public class TaskServlet extends HttpServlet {
                 task.addCategory(category);
             }
             task.setName(req.getParameter("description"));
-            task.setCreated(new Timestamp(new Date().getTime()));
             task.setDone(false);
         } else {
             String[] categoriesIds = req.getParameterValues("categoryIds");
@@ -51,7 +50,7 @@ public class TaskServlet extends HttpServlet {
             }
             task.setId(Integer.parseInt(req.getParameter("id")));
             task.setName(req.getParameter("description"));
-            task.setCreated(new Timestamp(Long.parseLong(req.getParameter("created"))));
+            task.setCreated(new Date(Long.parseLong(req.getParameter("created"))));
             task.setDone(Boolean.parseBoolean(req.getParameter("done")));
         }
         HibernateDB.instOf().save(task);

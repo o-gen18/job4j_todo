@@ -1,4 +1,4 @@
-#TO-DO list
+# TO-DO list
 
 [![Build Status](https://travis-ci.org/o-gen18/job4j_todo.svg?branch=master)](https://travis-ci.org/o-gen18/job4j_todo)
 
