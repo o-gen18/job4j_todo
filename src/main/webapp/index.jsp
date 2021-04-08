@@ -49,18 +49,31 @@
             if (!userRegistered()) {
                 return false;
             }
-            if (document.getElementById('description').value === '') {
+            var task = document.getElementById('description').value;
+            if (task === '') {
                 alert('Please, type the description of the task!');
                 return false;
             }
-            postTask();
+            var selectedCategories = [];
+            for (var option of document.getElementById('cIds').options) {
+                if (option.selected) {
+                    selectedCategories.push(option.value);
+                }
+            }
+            if (selectedCategories.length === 0) {
+                alert('Please, choose at least one category for the task!');
+                return false;
+            }
+            postTask(task, selectedCategories);
         }
 
-        function postTask() {
+        function postTask(task, selectedCategories) {
             $.ajax({
                 method: 'POST',
                 url: 'http://localhost:8080/job4j_todo/todo',
-                data: {description: $('#description').val()},
+                traditional: true,
+                data: {description: task,
+                selectedCategories: selectedCategories},
                 async: false,
                 success: function () {
                     location.reload();
@@ -92,16 +105,23 @@
             $.ajax({
                 method: 'POST',
                 url: 'http://localhost:8080/job4j_todo/todo',
+                traditional: true,
                 data: {
                     id: tableRow.getAttribute('id'),
                     description: tableRow.getElementsByClassName('descriptionText')[0].innerText,
+                    categoryIds: tableRow.getElementsByClassName('category')[0]
+                        .getAttribute('data-categoryId').split(',')
+                        .map(function(i) {
+                        return parseInt(i, 10);
+                    }),
                     created: Date.parse(tableRow.getElementsByClassName('created')[0].innerHTML),
                     done: setDone},
                 success: function () {
                     location.reload();
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
-                    alert('textStatus: ' + textStatus + '\n' + 'errorThrown: ' + errorThrown);
+                    alert('textStatus: ' + textStatus + '\n' + 'errorThrown: ' + errorThrown + '\n' + 'responseText:' + jqXHR.responseText
+                        + '\n' + 'jqXHR.statusText: ' + jqXHR.statusText);
                 }
             });
         }
@@ -115,6 +135,12 @@
                 var jsonResp = JSON.parse(JSON.stringify(data));
                 for (var i in jsonResp) {
                     var desc = jsonResp[i].name;
+                    var category = '';
+                    var categoryId = [];
+                    for (var categ of JSON.parse(JSON.stringify(jsonResp[i].categories))) {
+                        category += categ.name + '\n';
+                        categoryId.push(categ.id);
+                    }
                     $('#tableBody').append(
                         '<tr id="'+ jsonResp[i].id + '">\n' +
                         '                <td>\n' +
@@ -126,6 +152,7 @@
                         '                    </a>\n' +
                         '                    <a class="descriptionText" title="change the description" style="cursor: pointer; color:black" onclick="popUpEdit(this.closest(\'tr\'))">' + desc + '</a>\n' +
                         '                </td>\n' +
+                        '                <td class="category" data-categoryId=\"' + categoryId + '\">' + category + '</td>\n' +
                         '                <td class="created">'+ new Date(jsonResp[i].created) +'</td>\n' +
                         '                <td class="author">'+ jsonResp[i].author.name +'</td>\n' +
                         '                <td class="author-role">'+ jsonResp[i].author.role.name +'</td>\n' +
@@ -135,6 +162,21 @@
                     );
                 }
                 showAll(document.getElementById('checkbox'));
+            })
+        }
+
+        function getCategories() {
+            $.ajax({
+                method: 'GET',
+                url: 'http://localhost:8080/job4j_todo/category',
+                dataType: 'json'
+            }).done(function (data) {
+                var categoies = JSON.parse(JSON.stringify(data));
+                for (var i in categoies) {
+                    $('#cIds').append(
+                        '<option value=\"' + categoies[i].id + '\">' + categoies[i].name +'</option>'
+                    );
+                }
             })
         }
 
@@ -278,7 +320,7 @@
         }
     </script>
 </head>
-<body onload="getTasks(); loadRoles()">
+<body onload="getTasks();getCategories(); loadRoles()">
 <div class="container-fluid">
     <h1 align="center">ToDo-list</h1>
 </div>
@@ -298,6 +340,11 @@
             <label for="description">Add new task: </label>
             <textarea id="description" class="form-control" placeholder="Type description..."></textarea>
         </div>
+        <div class="form-group">
+            <label for="cIds">Task's categories: </label>
+            <select class="form-control" name="cIds" id="cIds" multiple>
+            </select>
+        </div>
         <input type="button" class="btn btn-primary" value="Submit" onclick="return validate()">
     </form>
     <div class="form-check" align="center">
@@ -311,6 +358,7 @@
             <thead>
             <tr>
                 <th>Description</th>
+                <th>Category</th>
                 <th>Created</th>
                 <th>Author</th>
                 <th>Role</th>

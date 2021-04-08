@@ -18,3 +18,8 @@ CREATE TABLE j_user (
     role_id INT NOT NULL REFERENCES j_role(id),
     password TEXT
 );
+
+CREATE TABLE categories (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE
+);

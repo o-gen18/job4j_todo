@@ -2,6 +2,8 @@ package todo.model;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -17,6 +19,9 @@ public class Task implements Model {
     @JoinColumn(name = "user_id")
     private User author;
 
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.EAGER)
+    private List<Category> categories = new ArrayList<>();
+
     public Task(String name, Timestamp created, boolean done) {
         this.name = name;
         this.created = created;
@@ -31,6 +36,10 @@ public class Task implements Model {
     }
 
     public Task() {
+    }
+
+    public void addCategory(Category category) {
+        categories.add(category);
     }
 
     public int getId() {
@@ -71,6 +80,14 @@ public class Task implements Model {
 
     public void setAuthor(User author) {
         this.author = author;
+    }
+
+    public List<Category> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(List<Category> categories) {
+        this.categories = categories;
     }
 
     @Override

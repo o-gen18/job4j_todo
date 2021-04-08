@@ -6,10 +6,7 @@ import org.hibernate.Transaction;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import todo.model.Model;
-import todo.model.Role;
-import todo.model.Task;
-import todo.model.User;
+import todo.model.*;
 import java.util.List;
 import java.util.function.Function;
 
@@ -99,6 +96,15 @@ public class HibernateDB implements AutoCloseable {
                     .getResultList().stream()
                     .findFirst()
                     .orElse(null));
+    }
+
+    public List<Category> allCategories() {
+        return this.doTransaction(session -> session
+        .createQuery("from todo.model.Category as category order by category.id").list());
+    }
+
+    public Category findCategoryById(Integer id) {
+        return this.doTransaction(session -> session.find(Category.class, id));
     }
 
     @Override

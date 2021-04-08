@@ -1,7 +1,7 @@
 package todo.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import todo.model.Role;
+import todo.model.Category;
 import todo.model.Task;
 import todo.model.User;
 import todo.persistence.HibernateDB;
@@ -33,10 +33,22 @@ public class TaskServlet extends HttpServlet {
         User user = (User) req.getSession().getAttribute("user");
         task.setAuthor(user);
         if (req.getParameter("id") == null) {
+            String[] categoriesIds = req.getParameterValues("selectedCategories");
+            for (String categoryId : categoriesIds) {
+                Category category = HibernateDB.instOf()
+                        .findCategoryById(Integer.parseInt(categoryId));
+                task.addCategory(category);
+            }
             task.setName(req.getParameter("description"));
             task.setCreated(new Timestamp(new Date().getTime()));
             task.setDone(false);
         } else {
+            String[] categoriesIds = req.getParameterValues("categoryIds");
+            for (String categoryId : categoriesIds) {
+                Category category = HibernateDB.instOf()
+                        .findCategoryById(Integer.parseInt(categoryId));
+                task.addCategory(category);
+            }
             task.setId(Integer.parseInt(req.getParameter("id")));
             task.setName(req.getParameter("description"));
             task.setCreated(new Timestamp(Long.parseLong(req.getParameter("created"))));
